@@ -16,8 +16,11 @@ $ poetry self add 'poethepoet[poetry_plugin]'
 
 At this point, the following commands can be run:
 ```bash
-$ poetry poe start  # run Uvicorn server
-$ poetry poe test   # run testcases
+$ poetry poe start      # run Uvicorn server
+$ poetry poe test       # run testcases
+$ poetry poe lint       # run Ruff linter
+$ poetry poe format     # format code with Ruff
+$ poetry poe precommit  # run pre-commit hooks
 ```
 
 More arguments can be added to the base commands, for example `poetry poe start --reload`.
