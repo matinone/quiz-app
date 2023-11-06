@@ -1,3 +1,15 @@
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # flake8-bugbear
+    "B",
+    # isort
+    "I",
+]
+
 [tool.poetry]
 name = "quiz-app"
 version = "0.1.0"
