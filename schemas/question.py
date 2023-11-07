@@ -1,9 +1,10 @@
-from pydantic import BaseModel, ConfigDict
-
 from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
 class QuestionBase(BaseModel):
+    quiz_id: int
     content: str
     type: str
     points: int
@@ -17,6 +18,7 @@ class QuestionCreate(QuestionBase):
 
 class QuestionUpdate(QuestionBase):
     # not forced to always update all the fields
+    quiz_id: int | None
     content: str | None
     type: str | None
     points: int | None
@@ -24,6 +26,5 @@ class QuestionUpdate(QuestionBase):
 
 class QuestionReturn(QuestionBase):
     id: int
-    quiz_id: int
     created_at: datetime
     updated_at: datetime

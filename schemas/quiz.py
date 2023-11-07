@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
-from datetime import datetime
+from schemas import QuestionReturn
 
 
 class QuizBase(BaseModel):
@@ -24,3 +26,7 @@ class QuizReturn(QuizBase):
     created_at: datetime
     updated_at: datetime
     # TODO: add created_by field once users table is available
+
+
+class QuizWithQuestions(QuizReturn):
+    questions: list[QuestionReturn]
