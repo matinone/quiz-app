@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from schemas import QuestionReturn
+from app.schemas import QuestionReturn
 
 
 class QuizBase(BaseModel):
@@ -16,9 +16,12 @@ class QuizCreate(QuizBase):
     pass
 
 
-class QuizUpdate(QuizBase):
-    # not forced to always update the title
+class QuizUpdate(BaseModel):
+    # not forced to always update all the fields
     title: str | None
+    description: str | None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuizReturn(QuizBase):

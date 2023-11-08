@@ -6,15 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from models.database import Base
-from models.question import Question
-from schemas import QuizCreate
+from app.models.database import Base
+from app.models.question import Question
+from app.schemas import QuizCreate
 
 
 class Quiz(Base):
     __tablename__ = "quizzes"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     description: Mapped[str] = mapped_column(String(512), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -29,10 +28,10 @@ class Quiz(Base):
 
     @classmethod
     async def create(cls, db: AsyncSession, quiz: QuizCreate) -> Self:
-        quiz = cls(title=QuizCreate.title, description=QuizCreate.description)
-        quiz.updated_at = func.now()
-        db.add(quiz)
+        new_quiz = cls(title=QuizCreate.title, description=QuizCreate.description)
+        new_quiz.updated_at = func.now()
+        db.add(new_quiz)
         await db.commit()
-        await db.refresh(quiz)
+        await db.refresh(new_quiz)
 
-        return quiz
+        return new_quiz

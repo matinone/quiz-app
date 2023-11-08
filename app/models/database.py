@@ -1,13 +1,13 @@
-from typing import Any, AsyncIterator, Self
+from typing import Any, AsyncGenerator, Self
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.sql import func
 
-from core.settings import get_settings
+from app.core.settings import get_settings
 
 
 class Base(DeclarativeBase):
@@ -15,8 +15,10 @@ class Base(DeclarativeBase):
     This Base class also defines common methods for CRUD operations.
     """
 
+    id: Mapped[int] = mapped_column(primary_key=True)
+
     @classmethod
-    async def get(cls, db: AsyncSession, id: int) -> Self:
+    async def get(cls, db: AsyncSession, id: int) -> Self | None:
         result = await db.execute(select(cls).where(cls.id == id))
         return result.scalar()
 
@@ -52,7 +54,7 @@ class Base(DeclarativeBase):
         return db_obj
 
     @classmethod
-    async def delete_by_id(cls, db: AsyncSession, id: int) -> Self:
+    async def delete_by_id(cls, db: AsyncSession, id: int) -> Self | None:
         db_obj = await cls.get(db, id)
         if db_obj:
             await db.delete(db_obj)
@@ -74,13 +76,10 @@ async def init_db():
             await conn.run_sync(Base.metadata.create_all)
 
 
-def get_session() -> AsyncIterator[async_sessionmaker]:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency to create/close a new session per request, making sure that the
     session is always closed even if there is an exception.
     """
-    try:
-        db = AsyncSessionLocal()
-        yield db
-    finally:
-        db.close()
+    async with AsyncSessionLocal() as session:
+        yield session

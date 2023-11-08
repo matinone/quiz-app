@@ -16,12 +16,14 @@ class QuestionCreate(QuestionBase):
     pass
 
 
-class QuestionUpdate(QuestionBase):
+class QuestionUpdate(BaseModel):
     # not forced to always update all the fields
     quiz_id: int | None
     content: str | None
     type: str | None
     points: int | None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuestionReturn(QuestionBase):

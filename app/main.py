@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from core.settings import get_settings
-from models.database import init_db
+from app.core.settings import get_settings
+from app.models.database import init_db
 
 app = FastAPI()
 
