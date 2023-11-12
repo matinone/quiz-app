@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from sqlalchemy import DateTime, String
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,8 +7,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.models.database import Base
-from app.models.question import Question
 from app.schemas import QuizCreate
+
+if TYPE_CHECKING:
+    from app.models.question import Question
 
 
 class Quiz(Base):
@@ -22,13 +24,14 @@ class Quiz(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     # TODO: add created_by column once users table is available
 
-    questions: Mapped[list[Question]] = relationship(
+    # have to use "Question" to avoid circular dependencies
+    questions: Mapped[list["Question"]] = relationship(  # noqa: F821
         "Question", back_populates="quiz", cascade="delete, delete-orphan"
     )
 
     @classmethod
     async def create(cls, db: AsyncSession, quiz: QuizCreate) -> Self:
-        new_quiz = cls(title=QuizCreate.title, description=QuizCreate.description)
+        new_quiz = cls(title=quiz.title, description=quiz.description)
         new_quiz.updated_at = func.now()
         db.add(new_quiz)
         await db.commit()

@@ -18,10 +18,10 @@ class QuestionCreate(QuestionBase):
 
 class QuestionUpdate(BaseModel):
     # not forced to always update all the fields
-    quiz_id: int | None
-    content: str | None
-    type: str | None
-    points: int | None
+    quiz_id: int | None = None
+    content: str | None = None
+    type: str | None = None
+    points: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -7,7 +7,7 @@ from app.schemas import QuestionReturn
 
 class QuizBase(BaseModel):
     title: str
-    description: str | None
+    description: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,8 +18,8 @@ class QuizCreate(QuizBase):
 
 class QuizUpdate(BaseModel):
     # not forced to always update all the fields
-    title: str | None
-    description: str | None
+    title: str | None = None
+    description: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
