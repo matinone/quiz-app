@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     APP_NAME: str = "Quiz App"
     ENVIRONMENT: str = "dev"
-    DB_URL: str = "sqlite+aiosqlite:///./sql_dev.db"
+    DB_URL: str = "sqlite+aiosqlite:///./sqlite_dev.db"
     ECHO_SQL: bool = False
     USE_ALEMBIC: bool = False
 

@@ -966,6 +966,41 @@ pluggy = ">=0.12,<2.0"
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-asyncio"
+version = "0.21.1"
+description = "Pytest support for asyncio"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pytest-asyncio-0.21.1.tar.gz", hash = "sha256:40a7eae6dded22c7b604986855ea48400ab15b069ae38116e8c01238e9eeb64d"},
+    {file = "pytest_asyncio-0.21.1-py3-none-any.whl", hash = "sha256:8666c1c8ac02631d7c51ba282e0c69a8a452b211ffedf2599099845da5c5c37b"},
+]
+
+[package.dependencies]
+pytest = ">=7.0.0"
+
+[package.extras]
+docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
+testing = ["coverage (>=6.2)", "flaky (>=3.5.0)", "hypothesis (>=5.7.1)", "mypy (>=0.931)", "pytest-trio (>=0.7.0)"]
+
+[[package]]
+name = "pytest-env"
+version = "1.1.1"
+description = "pytest plugin that allows you to add environment variables."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest_env-1.1.1-py3-none-any.whl", hash = "sha256:2b71b37c6810f28bec790a7b373c777af87352b3a359b3de0edb9d24df5cf8b3"},
+    {file = "pytest_env-1.1.1.tar.gz", hash = "sha256:1efb8acce1f6431196150f3b30673443ff05a6fabff64539a9495cd2248adf9e"},
+]
+
+[package.dependencies]
+pytest = ">=7.4.3"
+
+[package.extras]
+test = ["covdefaults (>=2.3)", "coverage (>=7.3.2)", "pytest-mock (>=3.12)"]
+
+[[package]]
 name = "python-dotenv"
 version = "1.0.0"
 description = "Read key-value pairs from a .env file and set them as environment variables"
@@ -1561,4 +1596,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "8f54705f343ac06174bd13d94769beaff368cc004df6321fb03d5a8d078e098d"
+content-hash = "f2087e3bf7770aaeacb6052e80199517671a79df5221176fb643bb1f30866a05"

@@ -8,11 +8,6 @@ app = FastAPI(title="Quiz App")
 app.include_router(api_router, prefix="/api")
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
 if __name__ == "__main__":
     import asyncio  # noqa: I001
     import uvicorn
