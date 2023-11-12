@@ -25,7 +25,7 @@ class Quiz(Base):
     # TODO: add created_by column once users table is available
 
     # have to use "Question" to avoid circular dependencies
-    questions: Mapped[list["Question"]] = relationship(  # noqa: F821
+    questions: Mapped[list["Question"]] = relationship(
         "Question", back_populates="quiz", cascade="delete, delete-orphan"
     )
 

@@ -26,7 +26,7 @@ class Question(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # have to use "Quiz" to avoid circular dependencies
-    quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="questions")  # noqa: F821
+    quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="questions")
 
     @classmethod
     async def create(cls, db: AsyncSession, question: QuestionCreate) -> Self:

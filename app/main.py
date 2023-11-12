@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 
+from app.api.api import api_router
 from app.core.settings import get_settings
 from app.models.database import init_db
 
-app = FastAPI()
+app = FastAPI(title="Quiz App")
+app.include_router(api_router, prefix="/api")
 
 
 @app.get("/")

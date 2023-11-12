@@ -1,5 +1,6 @@
-from typing import Any, AsyncGenerator, Self
+from typing import Annotated, Any, AsyncGenerator, Self
 
+from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -78,8 +79,12 @@ async def init_db():
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    Dependency to create/close a new session per request, making sure that the
-    session is always closed even if there is an exception.
+    Dependency to create/close a new session per request, making sure that the session
+    is always closed even if there is an error (thanks to the async context manager).
     """
     async with AsyncSessionLocal() as session:
         yield session
+
+
+# type alias for the database session
+AsyncSessionDep = Annotated[AsyncSession, Depends(get_session)]
