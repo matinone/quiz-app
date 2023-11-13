@@ -26,7 +26,6 @@ async def db_connection() -> AsyncGenerator[AsyncConnection, None]:
     """
     Fixture to use a single DB connection for the whole testsuite.
     """
-
     # always drop and create test DB tables between test sessions
     async with async_engine.connect() as connection:
         await connection.run_sync(Base.metadata.drop_all)
@@ -61,5 +60,5 @@ async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
 
     app.dependency_overrides[get_session] = override_get_session
 
-    async with AsyncClient(app=app, base_url="http://0.0.0.0") as client:
+    async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
