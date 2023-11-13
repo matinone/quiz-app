@@ -53,7 +53,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poe.tasks]
 start = "python app/main.py"
-test = "pytest --version"
+test = "pytest app/tests/ -v"
 lint = "ruff check ."
 format = "ruff format ."
 precommit = "pre-commit run --all-files"
