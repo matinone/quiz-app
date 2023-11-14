@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Self
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import DateTime, String, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -38,3 +38,12 @@ class Quiz(Base):
         await db.refresh(new_quiz)
 
         return new_quiz
+
+    @classmethod
+    async def get_multiple(
+        cls, db: AsyncSession, offset: int = 0, limit: int = 25
+    ) -> list[Self]:
+        result = await db.execute(
+            select(cls).order_by(desc(cls.created_at)).offset(offset).limit(limit)
+        )
+        return list(result.scalars().all())
