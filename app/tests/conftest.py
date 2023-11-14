@@ -3,10 +3,13 @@ from typing import AsyncGenerator
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session, SessionTransaction
 
 from app.main import app
-from app.models.database import Base, async_engine, get_session
+from app.models.database import AsyncSessionLocal, Base, async_engine, get_session
+from app.tests.factories import factory_list
 
 
 @pytest.fixture(scope="session")
@@ -22,33 +25,40 @@ def event_loop():
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def db_connection() -> AsyncGenerator[AsyncConnection, None]:
+async def db_connection() -> None:
     """
-    Fixture to use a single DB connection for the whole testsuite.
+    Fixture to create database tables from scratch for each test session.
     """
     # always drop and create test DB tables between test sessions
     async with async_engine.connect() as connection:
         await connection.run_sync(Base.metadata.drop_all)
         await connection.run_sync(Base.metadata.create_all)
-        await connection.commit()  # ensure any open transactions are committed
-
-        yield connection
 
 
 @pytest.fixture(scope="function")
-async def db_session(
-    db_connection: AsyncConnection
-) -> AsyncGenerator[AsyncSession, None]:
-    """
-    Fixture to create a new separate transaction for each testcase, rolling back all
-    the DB changes after the test finishes.
-    This ensures that each testcase starts with an empty database.
-    """
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_engine.connect() as conn:
+        await conn.begin()
+        await conn.begin_nested()
+        async_session = AsyncSessionLocal(bind=conn)
 
-    async with AsyncSession(bind=db_connection, expire_on_commit=False) as session:
-        await session.begin_nested()  # create savepoint to rollback to
-        yield session
-        await session.rollback()  # rollback to the savepoint
+        # ensures a savepoint is always available to roll back to
+        @event.listens_for(async_session.sync_session, "after_transaction_end")
+        def end_savepoint(session: Session, transaction: SessionTransaction) -> None:
+            if conn.closed:
+                return
+            if not conn.in_nested_transaction():
+                if conn.sync_connection:
+                    conn.sync_connection.begin_nested()
+
+        for factory in factory_list:
+            factory._meta.sqlalchemy_session = async_session
+
+        yield async_session
+        await async_session.close()
+        await conn.rollback()
+
+    await async_engine.dispose()
 
 
 @pytest.fixture(scope="function")
