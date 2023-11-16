@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 import app.models as models
 import app.schemas as schemas
@@ -8,6 +8,16 @@ from app.models.database import AsyncSessionDep
 from app.models.question import Question  # noqa: F401
 
 router = APIRouter(prefix="/quiz", tags=["quiz"])
+
+
+async def get_quiz_from_id(quiz_id: int, db: AsyncSessionDep):
+    quiz = await models.Quiz.get(db=db, id=quiz_id)
+    if not quiz:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found"
+        )
+
+    return quiz
 
 
 @router.post(
@@ -36,3 +46,44 @@ async def get_quizzes(
 ) -> Any:
     quizzes = await models.Quiz.get_multiple(offset=offset, limit=limit, db=db)
     return quizzes
+
+
+@router.get(
+    "/{quiz_id}",
+    response_model=schemas.QuizReturn,
+    status_code=status.HTTP_200_OK,
+    summary="Get quiz by id",
+    response_description="The requested quiz (if it exists)",
+)
+async def get_quiz(quiz: Annotated[models.Quiz, Depends(get_quiz_from_id)]) -> Any:
+    return quiz
+
+
+@router.put(
+    "/{quiz_id}",
+    response_model=schemas.QuizReturn,
+    status_code=status.HTTP_200_OK,
+    summary="Update quiz by id",
+    response_description="The updated quiz (if it exists)",
+)
+async def update_quiz(
+    update_data: schemas.QuizUpdate,
+    quiz: Annotated[models.Quiz, Depends(get_quiz_from_id)],
+    db: AsyncSessionDep,
+) -> Any:
+    updated_quiz = await models.Quiz.update(db=db, current=quiz, new=update_data)
+
+    return updated_quiz
+
+
+@router.delete(
+    "/{quiz_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete quiz by id",
+)
+async def delete_quiz(
+    quiz: Annotated[models.Quiz, Depends(get_quiz_from_id)],
+    db: AsyncSessionDep,
+) -> None:
+    await models.Quiz.delete(db=db, db_obj=quiz)
+    # body will be empty when using status code 204

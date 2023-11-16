@@ -31,7 +31,7 @@ class Base(DeclarativeBase):
             update_data = new
         else:
             # exclude_unset=True to avoid updating to default values
-            update_data = new.dict(exclude_unset=True)
+            update_data = new.model_dump(exclude_unset=True)
 
         current_data = jsonable_encoder(current)
         for field in current_data:

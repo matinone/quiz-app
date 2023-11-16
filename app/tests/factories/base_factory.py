@@ -8,5 +8,9 @@ T = TypeVar("T")
 # see https://github.com/FactoryBoy/factory_boy/issues/468
 class BaseFactory(Generic[T], AsyncSQLAlchemyFactory):
     @classmethod
-    def create(cls, **kwargs) -> T:
-        return super().create(**kwargs)
+    async def create(cls, **kwargs) -> T:
+        return await super().create(**kwargs)
+
+    @classmethod
+    async def create_batch(cls, *args, **kwargs) -> list[T]:
+        return await super().create_batch(*args, **kwargs)

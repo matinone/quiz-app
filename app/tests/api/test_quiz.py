@@ -5,6 +5,7 @@ from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import app.models as models
 from app.tests.factories import QuizFactory
 
 
@@ -25,6 +26,12 @@ async def test_create_quiz(client: AsyncClient, db_session: AsyncSession):
     for key in ["created_at", "updated_at"]:
         parsed_datetime = datetime.strptime(created_quiz[key], "%Y-%m-%dT%H:%M:%S")
         assert parsed_datetime >= time_before and parsed_datetime <= time_after
+
+    # check quiz exists in database
+    db_quiz = await models.Quiz.get(db=db_session, id=created_quiz["id"])
+    assert db_quiz
+    for key in quiz_data:
+        assert quiz_data[key] == getattr(db_quiz, key)
 
 
 @pytest.mark.parametrize("cases", ["no_quizzes", "few_quizzes", "many_quizzes"])
@@ -65,3 +72,79 @@ async def test_get_quizzes_query_params(client: AsyncClient, db_session: AsyncSe
 
     returned_quizzes = response.json()
     assert len(returned_quizzes) == 28
+
+
+@pytest.mark.parametrize("cases", ["found", "not_found"])
+async def test_get_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
+    quiz_id = 4
+    if cases == "found":
+        created_quiz = await QuizFactory.create(id=quiz_id)
+
+    response = await client.get(f"/api/quiz/{quiz_id}")
+
+    if cases == "not_found":
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+    else:
+        assert response.status_code == status.HTTP_200_OK
+
+        quiz = response.json()
+        for key in ["id", "title", "description"]:
+            assert quiz[key] == getattr(created_quiz, key)
+        for key in ["created_at", "updated_at"]:
+            assert quiz[key] == getattr(created_quiz, key).isoformat()
+
+
+@pytest.mark.parametrize("cases", ["found", "not_found", "partial_update"])
+async def test_update_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
+    quiz_id = 4
+    if cases != "not_found":
+        await QuizFactory.create(
+            id=quiz_id, updated_at=datetime.utcnow() - timedelta(hours=5)
+        )
+
+    quiz_data = {"title": "New title"}
+    if cases != "partial_update":
+        quiz_data["description"] = "New description"
+
+    before_update = datetime.utcnow() - timedelta(seconds=5)
+    response = await client.put(f"/api/quiz/{quiz_id}", json=quiz_data)
+
+    if cases == "not_found":
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+    else:
+        assert response.status_code == status.HTTP_200_OK
+
+        # check response and database
+        updated_quiz = response.json()
+        db_quiz = await models.Quiz.get(db=db_session, id=quiz_id)
+
+        assert db_quiz
+        assert updated_quiz["id"] == quiz_id
+        modified_keys = ["title"]
+        if cases != "partial_update":
+            modified_keys.append("description")
+
+        for key in modified_keys:
+            assert updated_quiz[key] == quiz_data[key]
+            assert getattr(db_quiz, key) == quiz_data[key]
+
+        # check updated_at column is updated
+        assert db_quiz.updated_at >= before_update
+
+
+@pytest.mark.parametrize("cases", ["found", "not_found"])
+async def test_delete_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
+    quiz_id = 4
+    if cases == "found":
+        await QuizFactory.create(id=quiz_id)
+
+    response = await client.delete(f"/api/quiz/{quiz_id}")
+
+    if cases == "not_found":
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+    else:
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # check quiz was deleted from database
+        db_quiz = await models.Quiz.get(db=db_session, id=quiz_id)
+        assert not db_quiz
