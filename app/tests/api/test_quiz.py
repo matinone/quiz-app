@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 import pytest
+from dirty_equals import IsDatetime, IsInt, IsNonNegative, IsNow, IsStr
 from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,11 +22,10 @@ async def test_create_quiz(client: AsyncClient, db_session: AsyncSession):
         assert created_quiz[key] == quiz_data[key]
 
     # created_at/updated_at should be close to the current time
-    time_before = datetime.utcnow() - timedelta(minutes=2)
-    time_after = datetime.utcnow() + timedelta(minutes=2)
     for key in ["created_at", "updated_at"]:
-        parsed_datetime = datetime.strptime(created_quiz[key], "%Y-%m-%dT%H:%M:%S")
-        assert parsed_datetime >= time_before and parsed_datetime <= time_after
+        assert created_quiz[key] == IsDatetime(
+            approx=datetime.utcnow(), delta=5, iso_string=True
+        )
 
     # check quiz exists in database
     db_quiz = await models.Quiz.get(db=db_session, id=created_quiz["id"])
@@ -55,11 +55,13 @@ async def test_get_quizzes(client: AsyncClient, db_session: AsyncSession, cases:
         assert len(returned_quizzes) == 25
 
     for quiz in returned_quizzes:
-        assert "id" in quiz
-        assert "title" in quiz
-        assert "description" in quiz
-        assert "created_at" in quiz
-        assert "updated_at" in quiz
+        assert quiz == {
+            "id": IsInt & IsNonNegative,
+            "title": IsStr,
+            "description": IsStr,
+            "created_at": IsNow(iso_string=True),
+            "updated_at": IsNow(iso_string=True),
+        }
 
 
 async def test_get_quizzes_query_params(client: AsyncClient, db_session: AsyncSession):
