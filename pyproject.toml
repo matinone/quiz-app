@@ -1,3 +1,4 @@
+# Ruff configuration
 [tool.ruff.lint]
 select = [
     # pycodestyle
@@ -10,6 +11,8 @@ select = [
     "I",
 ]
 
+
+# Pytest configuration
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 
@@ -18,7 +21,14 @@ ENVIRONMENT = "test"
 USE_ALEMBIC = false
 DB_URL = "sqlite+aiosqlite:///./sqlite_test.db"
 
+[tool.coverage.run]
+branch = true
+concurrency = ["greenlet", "thread"]
+source = ["app/api"]
+omit = ["app/tests/*"]
 
+
+# Poetry configuration
 [tool.poetry]
 name = "quiz-app"
 version = "0.1.0"
