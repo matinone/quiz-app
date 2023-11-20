@@ -10,7 +10,7 @@ from app.models.question import Question  # noqa: F401
 router = APIRouter(prefix="/quiz", tags=["quiz"])
 
 
-async def get_quiz_from_id(quiz_id: int, db: AsyncSessionDep):
+async def get_quiz_from_id(quiz_id: int, db: AsyncSessionDep) -> models.Quiz:
     quiz = await models.Quiz.get(db=db, id=quiz_id)
     if not quiz:
         raise HTTPException(

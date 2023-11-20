@@ -10,28 +10,38 @@ import app.models as models
 from app.tests.factories import QuizFactory
 
 
-async def test_create_quiz(client: AsyncClient, db_session: AsyncSession):
+# add test with missing title/description
+@pytest.mark.parametrize("cases", ["full", "no_title", "no_description"])
+async def test_create_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
     quiz_data = {"title": "My quiz", "description": "My quiz description"}
+    if cases == "no_title":
+        quiz_data.pop("title")
+    elif cases == "no_description":
+        quiz_data.pop("description")
+
     response = await client.post("/api/quiz", json=quiz_data)
 
-    assert response.status_code == status.HTTP_201_CREATED
+    if cases == "no_title":
+        assert response.status_code == status.HTTP_422_UNPROCESSABLEs_ENTITY
+    else:
+        assert response.status_code == status.HTTP_201_CREATED
 
-    created_quiz = response.json()
-    assert "id" in created_quiz
-    for key in quiz_data:
-        assert created_quiz[key] == quiz_data[key]
+        created_quiz = response.json()
+        assert "id" in created_quiz
+        for key in quiz_data:
+            assert created_quiz[key] == quiz_data[key]
 
-    # created_at/updated_at should be close to the current time
-    for key in ["created_at", "updated_at"]:
-        assert created_quiz[key] == IsDatetime(
-            approx=datetime.utcnow(), delta=5, iso_string=True
-        )
+        # created_at/updated_at should be close to the current time
+        for key in ["created_at", "updated_at"]:
+            assert created_quiz[key] == IsDatetime(
+                approx=datetime.utcnow(), delta=5, iso_string=True
+            )
 
-    # check quiz exists in database
-    db_quiz = await models.Quiz.get(db=db_session, id=created_quiz["id"])
-    assert db_quiz
-    for key in quiz_data:
-        assert quiz_data[key] == getattr(db_quiz, key)
+        # check quiz exists in database
+        db_quiz = await models.Quiz.get(db=db_session, id=created_quiz["id"])
+        assert db_quiz
+        for key in quiz_data:
+            assert quiz_data[key] == getattr(db_quiz, key)
 
 
 @pytest.mark.parametrize("cases", ["no_quizzes", "few_quizzes", "many_quizzes"])
