@@ -6,6 +6,7 @@ from httpx import AsyncClient
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, SessionTransaction
+from sqlalchemy.sql import text
 
 from app.main import app
 from app.models.database import AsyncSessionLocal, Base, async_engine, get_session
@@ -39,8 +40,10 @@ async def db_connection() -> None:
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_engine.connect() as conn:
         await conn.begin()
+        # enforce foreign key contraints (PRAGMA foreign_keys applies to a connection)
+        await conn.execute(text("PRAGMA foreign_keys = 1"))
         await conn.begin_nested()
-        async_session = AsyncSessionLocal(bind=conn)
+        async_session = AsyncSessionLocal(bind=conn, expire_on_commit=False)
 
         # ensures a savepoint is always available to roll back to
         @event.listens_for(async_session.sync_session, "after_transaction_end")

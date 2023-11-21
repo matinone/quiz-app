@@ -1,13 +1,20 @@
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
+
+
+class QuestionType(str, Enum):
+    open = "open"
+    multiple_choice = "multiple_choice"
+    true_false = "true_false"
 
 
 class QuestionBase(BaseModel):
     quiz_id: int
     content: str
-    type: str
-    points: int
+    type: QuestionType = QuestionType.open
+    points: int = 1
 
     model_config = ConfigDict(from_attributes=True)
 

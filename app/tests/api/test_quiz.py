@@ -22,7 +22,7 @@ async def test_create_quiz(client: AsyncClient, db_session: AsyncSession, cases:
     response = await client.post("/api/quiz", json=quiz_data)
 
     if cases == "no_title":
-        assert response.status_code == status.HTTP_422_UNPROCESSABLEs_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     else:
         assert response.status_code == status.HTTP_201_CREATED
 
