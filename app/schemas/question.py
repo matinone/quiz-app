@@ -11,7 +11,6 @@ class QuestionType(str, Enum):
 
 
 class QuestionBase(BaseModel):
-    quiz_id: int
     content: str
     type: QuestionType = QuestionType.open
     points: int = 1
@@ -20,7 +19,7 @@ class QuestionBase(BaseModel):
 
 
 class QuestionCreate(QuestionBase):
-    pass
+    quiz_id: int | None = None
 
 
 class QuestionUpdate(BaseModel):
@@ -35,5 +34,6 @@ class QuestionUpdate(BaseModel):
 
 class QuestionReturn(QuestionBase):
     id: int
+    quiz_id: int
     created_at: datetime
     updated_at: datetime

@@ -1,6 +1,7 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.exc import IntegrityError
 
 import app.models as models
 import app.schemas as schemas
@@ -87,3 +88,24 @@ async def delete_quiz(
 ) -> None:
     await models.Quiz.delete(db=db, db_obj=quiz)
     # body will be empty when using status code 204
+
+
+@router.post(
+    "/{quiz_id}/questions",
+    response_model=schemas.QuestionReturn,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a question associated to the quiz",
+    response_description="The created question",
+)
+async def create_question_for_quiz(
+    quiz_id: int, question: schemas.QuestionCreate, db: AsyncSessionDep
+) -> Any:
+    question.quiz_id = quiz_id
+    try:
+        new_question = await models.Question.create(db=db, question=question)
+    except IntegrityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid quiz_id"
+        ) from exc
+
+    return new_question
