@@ -105,7 +105,22 @@ async def create_question_for_quiz(
         new_question = await models.Question.create(db=db, question=question)
     except IntegrityError as exc:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid quiz_id"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found"
         ) from exc
 
     return new_question
+
+
+@router.get(
+    "/{quiz_id}/questions",
+    response_model=list[schemas.QuestionReturn],
+    status_code=status.HTTP_200_OK,
+    summary="Get all questions associated to the quiz",
+    response_description="The list of questions associated to the quiz",
+)
+async def get_all_questions_from_quiz(
+    quiz_id: int,
+    quiz: Annotated[models.Quiz, Depends(get_quiz_from_id)],
+    db: AsyncSessionDep,
+) -> Any:
+    return await quiz.awaitable_attrs.questions

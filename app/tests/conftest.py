@@ -10,7 +10,10 @@ from sqlalchemy.sql import text
 
 from app.main import app
 from app.models.database import AsyncSessionLocal, Base, async_engine, get_session
-from app.tests.factories import factory_list
+from app.tests.factories.question_factory import QuestionFactory
+from app.tests.factories.quiz_factory import QuizFactory
+
+factory_list = [QuizFactory, QuestionFactory]
 
 
 @pytest.fixture(scope="session")
@@ -55,7 +58,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
                     conn.sync_connection.begin_nested()
 
         for factory in factory_list:
-            factory._meta.sqlalchemy_session = async_session
+            factory._meta.sqlalchemy_session = async_session  # type: ignore
 
         yield async_session
         await async_session.close()

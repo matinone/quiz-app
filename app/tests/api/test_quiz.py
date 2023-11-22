@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.models as models
 from app.schemas import QuestionType
-from app.tests.factories import QuizFactory
+from app.tests.factories.question_factory import QuestionFactory
+from app.tests.factories.quiz_factory import QuizFactory
 
 
 # add test with missing title/description
@@ -169,7 +170,7 @@ async def test_create_question(
 ):
     # questions must be associated to an existing quiz
     quiz = await QuizFactory.create()
-    question_data = {"quiz_id": int(quiz.id), "content": "What is the question?"}
+    question_data = {"quiz_id": quiz.id, "content": "What is the question?"}
 
     if cases == "custom":
         question_data["type"] = QuestionType.multiple_choice
@@ -204,7 +205,7 @@ async def test_create_question_no_quiz(client: AsyncClient, db_session: AsyncSes
     question_data = {"content": "What is the question?"}
     response = await client.post("/api/quiz/123/questions", json=question_data)
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 async def test_create_question_invalid_type(
@@ -219,3 +220,28 @@ async def test_create_question_invalid_type(
     response = await client.post(f"/api/quiz/{quiz.id}/questions", json=question_data)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+async def test_questions(client: AsyncClient, db_session: AsyncSession):
+    quiz = await QuizFactory.create()
+    questions = await QuestionFactory.create_batch(5, quiz=quiz)
+
+    response = await client.get(f"/api/quiz/{quiz.id}/questions")
+
+    assert response.status_code == status.HTTP_200_OK
+
+    returned_questions = response.json()
+    assert len(returned_questions) == len(questions)
+
+    # sort questions by id so they can be iterated simultaneously
+    questions = sorted(questions, key=lambda d: d.id)
+    returned_questions = sorted(returned_questions, key=lambda d: d["id"])
+
+    for created, returned in zip(questions, returned_questions):
+        for key in returned:
+            if key in ["created_at", "updated_at"]:
+                assert returned[key] == IsDatetime(
+                    approx=getattr(created, key), delta=0, iso_string=True
+                )
+            else:
+                assert returned[key] == getattr(created, key)

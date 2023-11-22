@@ -7,7 +7,7 @@ from app.tests.factories.base_factory import BaseFactory
 
 
 class QuizFactory(BaseFactory[Quiz]):
-    id = factory.Sequence(lambda x: f"{x}")
+    id = factory.Sequence(lambda x: x)
     title = factory.Faker("sentence")
     description = factory.Faker("paragraph")
     created_at = factory.LazyFunction(datetime.now)
