@@ -6,7 +6,6 @@ from sqlalchemy.exc import IntegrityError
 import app.models as models
 import app.schemas as schemas
 from app.models.database import AsyncSessionDep
-from app.models.question import Question  # noqa: F401
 
 router = APIRouter(prefix="/quiz", tags=["quiz"])
 

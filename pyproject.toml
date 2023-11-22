@@ -68,7 +68,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poe.tasks]
 start = "python app/main.py"
-test = "pytest app/tests/ -v"
+test = "pytest app/tests/ -v --cov --cov-report=term-missing"
 lint = "ruff check ."
 format = "ruff format ."
 precommit = "pre-commit run --all-files"
