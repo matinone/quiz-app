@@ -2,6 +2,7 @@ from typing import Annotated, Any, AsyncGenerator, Self
 
 from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
+from loguru import logger
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import (
@@ -81,6 +82,7 @@ AsyncSessionLocal = async_sessionmaker(bind=async_engine, autoflush=False, futur
 
 async def init_db():
     if not settings.USE_ALEMBIC:
+        logger.info("Creating local database tables")
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
