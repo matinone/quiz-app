@@ -35,9 +35,9 @@ version = "0.1.0"
 description = "Backend for Quiz App"
 license = "MIT"
 authors = ["Matias B"]
-readme = "README.md"
 repository = "https://github.com/mbrignone/quiz-app"
-packages = [{include = "app"}]
+# readme = "README.md"
+# packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"

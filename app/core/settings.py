@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "Quiz App"
+    PROJECT_NAME: str = "Quiz App"
     ENVIRONMENT: str = "dev"
     DB_URL: str = "sqlite+aiosqlite:///./sqlite_dev.db"
     ECHO_SQL: bool = False

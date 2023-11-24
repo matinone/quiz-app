@@ -26,3 +26,19 @@ $ poetry poe precommit  # run pre-commit hooks
 More arguments can be added to the base commands, for example `poetry poe start --reload`.
 
 There are also [pre-commit hooks](https://pre-commit.com/) configured to run the [Ruff](https://github.com/astral-sh/ruff) linter and code formatter. To install them, run `pre-commit install`.
+
+## Run with Docker
+
+1. Build the image (`-t` to tag the image).
+```bash
+$ docker build -f docker/Dockerfile -t fastapi_quiz .
+```
+2. Run the container (`-d` for detached mode to run the container in the background, `-p HOST:CONTAINER` to map the ports).
+```bash
+$ docker run -d -p 8000:8000 --name fastapi_cont fastapi_quiz
+```
+3. The app can now be accessed from http://0.0.0.0:8000 (docs at http://0.0.0.0:8000/docs).
+4. Access app logs (`-f` to follow the logs).
+```bash
+$ docker logs fastapi_cont -f
+```
