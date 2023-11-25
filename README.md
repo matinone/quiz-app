@@ -27,18 +27,40 @@ More arguments can be added to the base commands, for example `poetry poe start 
 
 There are also [pre-commit hooks](https://pre-commit.com/) configured to run the [Ruff](https://github.com/astral-sh/ruff) linter and code formatter. To install them, run `pre-commit install`.
 
-## Run with Docker
+## Run with Docker (SQLite)
 
-1. Build the image (`-t` to tag the image).
+1. Set `USE_SQLITE=true` in the `.env` file.
+2. Build the image (`-t` to tag the image).
 ```bash
-$ docker build -f docker/Dockerfile -t fastapi_quiz .
+$ docker build -t fastapi_quiz .
 ```
-2. Run the container (`-d` for detached mode to run the container in the background, `-p HOST:CONTAINER` to map the ports).
+3. Run the container (`-d` for detached mode to run the container in the background, `-p HOST:CONTAINER` to map the ports).
 ```bash
 $ docker run -d -p 8000:8000 --name fastapi_cont fastapi_quiz
 ```
-3. The app can now be accessed from http://0.0.0.0:8000 (docs at http://0.0.0.0:8000/docs).
-4. Access app logs (`-f` to follow the logs).
+4. The app can now be accessed from http://0.0.0.0:8000 (docs at http://0.0.0.0:8000/docs).
+5. Access app logs (`-f` to follow the logs).
 ```bash
 $ docker logs fastapi_cont -f
+```
+6. Stop and remove the containers.
+```bash
+$ docker stop fastapi_cont
+$ docker rm fastapi_cont
+```
+
+## Run with Docker Compose (PostgreSQL)
+1. Run docker compose (optional `--build` to rebuild the images).
+```bash
+$ docker compose up -d
+```
+2. The app can now be accessed from http://0.0.0.0:8000 (docs at http://0.0.0.0:8000/docs).  The pgAdmin platform can be accessed from http://0.0.0.0:5050, using `email=pgadmin4@pgadmin.org` and `password=admin` to login (they are defined in the `docker-compose.yml` file).
+3. Access app logs (-f to follow the logs).
+```bash
+$ docker logs fastapi_app -f # FastAPI app logs
+$ docker logs postgres_db -f # PostgreSQL logs
+```
+4. Stop and remove the containers (`-v` to also delete the volume used for PostgreSQL data).
+```bash
+$ docker compose down -v
 ```

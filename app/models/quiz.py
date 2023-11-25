@@ -17,7 +17,7 @@ class Quiz(Base):
     __tablename__ = "quizzes"
 
     title: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    description: Mapped[str] = mapped_column(String(512), nullable=True, index=True)
+    description: Mapped[str] = mapped_column(String(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

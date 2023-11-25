@@ -19,7 +19,7 @@ asyncio_mode = "auto"
 [tool.pytest_env]
 ENVIRONMENT = "test"
 USE_ALEMBIC = false
-DB_URL = "sqlite+aiosqlite:///./sqlite_test.db"
+USE_SQLITE = true
 
 [tool.coverage.run]
 branch = true
