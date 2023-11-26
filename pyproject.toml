@@ -1,4 +1,7 @@
 # Ruff configuration
+[tool.ruff]
+exclude = ["alembic/*.py"]
+
 [tool.ruff.lint]
 select = [
     # pycodestyle
@@ -47,6 +50,7 @@ sqlalchemy = "^2.0.23"
 pydantic-settings = "^2.0.3"
 asyncpg = "^0.29.0"
 loguru = "^0.7.2"
+alembic = "^1.12.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.3"
