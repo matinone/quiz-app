@@ -7,6 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.models as models
+from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
 
 
@@ -160,3 +161,22 @@ async def test_delete_quiz(client: AsyncClient, db_session: AsyncSession, cases:
         # check quiz was deleted from database
         db_quiz = await models.Quiz.get(db=db_session, id=quiz_id)
         assert not db_quiz
+
+
+async def test_delete_quiz_delete_questions(
+    client: AsyncClient, db_session: AsyncSession
+):
+    quiz_id = 4
+    quiz = await QuizFactory.create(id=quiz_id)
+    await QuestionFactory.create_batch(5, quiz=quiz)
+
+    response = await client.delete(f"/api/quiz/{quiz_id}")
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # check quiz was deleted from database
+    db_quiz = await models.Quiz.get(db=db_session, id=quiz_id)
+    assert not db_quiz
+
+    db_questions = await models.Question.get_by_quiz_id(db=db_session, quiz_id=quiz_id)
+    assert len(db_questions) == 0
