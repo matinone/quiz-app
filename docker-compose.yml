@@ -9,8 +9,9 @@ services:
       - 8000:8000
     env_file:
       - ./.env
-    # environment:
-    #   - USE_ALEMBIC=true
+    environment:
+      - USE_ALEMBIC=true
+      - ENVIRONMENT=prod
     depends_on:
       - postgres
   postgres:

@@ -19,6 +19,7 @@ if __name__ == "__main__":
         asyncio.run(init_db())
         reload = True
     else:
+        logger.info("Not creating database tables")
         reload = False
 
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=reload)

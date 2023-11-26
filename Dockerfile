@@ -15,6 +15,11 @@ COPY ./poetry.lock /code/poetry.lock
 RUN poetry install
 RUN poetry self add 'poethepoet[poetry_plugin]'
 
+# copy Alembic files to create/migrate DB
+COPY alembic.ini /code
+COPY alembic /code/alembic
+COPY start_server.sh /code
+
 # copy the app inside the /code directory
 COPY ./app /code/app
 
@@ -23,4 +28,5 @@ ENV PYTHONPATH /code
 EXPOSE 8000
 
 # run command to start Uvicorn server
-CMD ["poetry", "poe", "start"]
+# CMD ["poetry", "poe", "start"]
+CMD [ "/bin/bash", "start_server.sh"]
