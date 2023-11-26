@@ -7,7 +7,6 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.models as models
-from app.schemas import QuestionType
 from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
 
@@ -164,84 +163,20 @@ async def test_delete_quiz(client: AsyncClient, db_session: AsyncSession, cases:
         assert not db_quiz
 
 
-@pytest.mark.parametrize("cases", ["default", "custom"])
-async def test_create_question(
-    client: AsyncClient, db_session: AsyncSession, cases: str
-):
-    # questions must be associated to an existing quiz
-    quiz = await QuizFactory.create()
-    question_data = {"quiz_id": quiz.id, "content": "What is the question?"}
-
-    if cases == "custom":
-        question_data["type"] = QuestionType.multiple_choice
-        question_data["points"] = 4
-
-    response = await client.post(f"/api/quiz/{quiz.id}/questions", json=question_data)
-
-    assert response.status_code == status.HTTP_201_CREATED
-
-    if cases == "default":
-        question_data["type"] = QuestionType.open
-        question_data["points"] = 1
-
-    created_question = response.json()
-    for key in question_data:
-        assert created_question[key] == question_data[key]
-
-    # created_at/updated_at should be close to the current time
-    for key in ["created_at", "updated_at"]:
-        assert created_question[key] == IsDatetime(
-            approx=datetime.utcnow(), delta=2, iso_string=True
-        )
-
-    # check quiz exists in database
-    db_question = await models.Question.get(db=db_session, id=created_question["id"])
-    assert db_question
-    for key in question_data:
-        assert question_data[key] == getattr(db_question, key)
-
-
-async def test_create_question_no_quiz(client: AsyncClient, db_session: AsyncSession):
-    question_data = {"content": "What is the question?"}
-    response = await client.post("/api/quiz/123/questions", json=question_data)
-
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-
-
-async def test_create_question_invalid_type(
+async def test_delete_quiz_delete_questions(
     client: AsyncClient, db_session: AsyncSession
 ):
-    quiz = await QuizFactory.create()
-    question_data = {
-        "quiz_id": quiz.id,
-        "content": "What is the question?",
-        "type": "invalid",
-    }
-    response = await client.post(f"/api/quiz/{quiz.id}/questions", json=question_data)
+    quiz_id = 4
+    quiz = await QuizFactory.create(id=quiz_id)
+    await QuestionFactory.create_batch(5, quiz=quiz)
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    response = await client.delete(f"/api/quiz/{quiz_id}")
 
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
-async def test_questions(client: AsyncClient, db_session: AsyncSession):
-    quiz = await QuizFactory.create()
-    questions = await QuestionFactory.create_batch(5, quiz=quiz)
+    # check quiz was deleted from database
+    db_quiz = await models.Quiz.get(db=db_session, id=quiz_id)
+    assert not db_quiz
 
-    response = await client.get(f"/api/quiz/{quiz.id}/questions")
-
-    assert response.status_code == status.HTTP_200_OK
-
-    returned_questions = response.json()
-    assert len(returned_questions) == len(questions)
-
-    # sort questions by id so they can be iterated simultaneously
-    questions = sorted(questions, key=lambda d: d.id)
-    returned_questions = sorted(returned_questions, key=lambda d: d["id"])
-
-    for created, returned in zip(questions, returned_questions):
-        for key in returned:
-            if key in ["created_at", "updated_at"]:
-                assert returned[key] == IsDatetime(
-                    approx=getattr(created, key), delta=0, iso_string=True
-                )
-            else:
-                assert returned[key] == getattr(created, key)
+    db_questions = await models.Question.get_by_quiz_id(db=db_session, quiz_id=quiz_id)
+    assert len(db_questions) == 0

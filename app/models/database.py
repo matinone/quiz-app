@@ -75,7 +75,7 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 settings = get_settings()
 async_engine = create_async_engine(
-    settings.DB_URL, pool_pre_ping=True, echo=settings.ECHO_SQL
+    settings.get_db_url(), pool_pre_ping=True, echo=settings.ECHO_SQL
 )
 AsyncSessionLocal = async_sessionmaker(bind=async_engine, autoflush=False, future=True)
 

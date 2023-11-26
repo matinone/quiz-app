@@ -1,0 +1,40 @@
+version: "3.8"
+services:
+  fastapi:
+    container_name: fastapi_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env
+    environment:
+      - USE_ALEMBIC=true
+      - ENVIRONMENT=prod
+    depends_on:
+      - postgres
+  postgres:
+    container_name: postgres_db
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env
+    # no need to expose DB port, host machine doesn't access it
+    # ports:
+    #   - 5432:5432
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+# named volumes
+volumes:
+  postgres_data:

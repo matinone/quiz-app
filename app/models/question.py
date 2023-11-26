@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Self
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -42,3 +42,8 @@ class Question(Base):
         await db.refresh(new_question)
 
         return new_question
+
+    @classmethod
+    async def get_by_quiz_id(cls, db: AsyncSession, quiz_id: int) -> list[Self]:
+        result = await db.execute(select(cls).where(cls.quiz_id == quiz_id))
+        return list(result.scalars().all())
