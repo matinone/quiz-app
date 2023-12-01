@@ -117,9 +117,11 @@ async def create_question_for_quiz(
     summary="Get all questions associated to the quiz",
     response_description="The list of questions associated to the quiz",
 )
-async def get_all_questions_from_quiz(
-    quiz_id: int,
-    quiz: Annotated[models.Quiz, Depends(get_quiz_from_id)],
-    db: AsyncSessionDep,
-) -> Any:
-    return await quiz.awaitable_attrs.questions
+async def get_all_questions_from_quiz(quiz_id: int, db: AsyncSessionDep) -> Any:
+    quiz = await models.Quiz.get_with_questions(db=db, id=quiz_id)
+    if not quiz:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found"
+        )
+
+    return quiz.questions
