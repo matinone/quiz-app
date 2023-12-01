@@ -10,6 +10,7 @@ from app.models.database import Base
 from app.schemas import QuestionCreate
 
 if TYPE_CHECKING:
+    from app.models.answer_options import AnswerOption
     from app.models.quiz import Quiz
 
 
@@ -25,8 +26,12 @@ class Question(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
-    # have to use "Quiz" to avoid circular dependencies
+    # types as strings (i.e. "Quiz") to avoid circular dependencies
     quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="questions")
+
+    answer_options: Mapped[list["AnswerOption"]] = relationship(
+        "AnswerOption", back_populates="question", cascade="delete, delete-orphan"
+    )
 
     @classmethod
     async def create(cls, db: AsyncSession, question: QuestionCreate) -> Self:

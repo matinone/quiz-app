@@ -3,6 +3,8 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas import AnswerOptionReturn
+
 
 class QuestionType(str, Enum):
     open = "open"
@@ -36,3 +38,7 @@ class QuestionReturn(QuestionBase):
     quiz_id: int
     created_at: datetime
     updated_at: datetime
+
+
+class QuestionWithOptions(QuestionReturn):
+    answer_options: list[AnswerOptionReturn]
