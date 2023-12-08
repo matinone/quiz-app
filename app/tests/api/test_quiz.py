@@ -11,7 +11,6 @@ from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
 
 
-# add test with missing title/description
 @pytest.mark.parametrize("cases", ["full", "no_title", "no_description"])
 async def test_create_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
     quiz_data = {"title": "My quiz", "description": "My quiz description"}
