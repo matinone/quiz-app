@@ -11,7 +11,6 @@ from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
 
 
-# add test with missing title/description
 @pytest.mark.parametrize("cases", ["full", "no_title", "no_description"])
 async def test_create_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
     quiz_data = {"title": "My quiz", "description": "My quiz description"}
@@ -20,7 +19,7 @@ async def test_create_quiz(client: AsyncClient, db_session: AsyncSession, cases:
     elif cases == "no_description":
         quiz_data.pop("description")
 
-    response = await client.post("/api/quiz", json=quiz_data)
+    response = await client.post("/api/quizzes", json=quiz_data)
 
     if cases == "no_title":
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -53,7 +52,7 @@ async def test_get_quizzes(client: AsyncClient, db_session: AsyncSession, cases:
         n_quiz = 3 if cases == "few_quizzes" else 30
         await QuizFactory.create_batch(n_quiz)
 
-    response = await client.get("/api/quiz")
+    response = await client.get("/api/quizzes")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -79,7 +78,7 @@ async def test_get_quizzes_query_params(client: AsyncClient, db_session: AsyncSe
     n_quiz = 30
     await QuizFactory.create_batch(n_quiz)
 
-    response = await client.get("/api/quiz?offset=2&limit=30")
+    response = await client.get("/api/quizzes?offset=2&limit=30")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -93,7 +92,7 @@ async def test_get_quiz(client: AsyncClient, db_session: AsyncSession, cases: st
     if cases == "found":
         created_quiz = await QuizFactory.create(id=quiz_id)
 
-    response = await client.get(f"/api/quiz/{quiz_id}")
+    response = await client.get(f"/api/quizzes/{quiz_id}")
 
     if cases == "not_found":
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -120,7 +119,7 @@ async def test_update_quiz(client: AsyncClient, db_session: AsyncSession, cases:
         quiz_data["description"] = "New description"
 
     before_update = datetime.utcnow() - timedelta(seconds=5)
-    response = await client.put(f"/api/quiz/{quiz_id}", json=quiz_data)
+    response = await client.put(f"/api/quizzes/{quiz_id}", json=quiz_data)
 
     if cases == "not_found":
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -151,7 +150,7 @@ async def test_delete_quiz(client: AsyncClient, db_session: AsyncSession, cases:
     if cases == "found":
         await QuizFactory.create(id=quiz_id)
 
-    response = await client.delete(f"/api/quiz/{quiz_id}")
+    response = await client.delete(f"/api/quizzes/{quiz_id}")
 
     if cases == "not_found":
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -170,7 +169,7 @@ async def test_delete_quiz_delete_questions(
     quiz = await QuizFactory.create(id=quiz_id)
     await QuestionFactory.create_batch(5, quiz=quiz)
 
-    response = await client.delete(f"/api/quiz/{quiz_id}")
+    response = await client.delete(f"/api/quizzes/{quiz_id}")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 

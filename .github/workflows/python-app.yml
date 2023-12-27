@@ -29,6 +29,9 @@ jobs:
     - name: Lint with Ruff
       run: |
         poetry poe lint
+    - name: Type check with Mypy
+      run: |
+        poetry poe typecheck
     - name: Test with Pytest
       run: |
         poetry poe test

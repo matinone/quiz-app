@@ -24,7 +24,9 @@ async def test_create_question(
         question_data["type"] = QuestionType.multiple_choice
         question_data["points"] = 4
 
-    response = await client.post(f"/api/quiz/{quiz.id}/questions", json=question_data)
+    response = await client.post(
+        f"/api/quizzes/{quiz.id}/questions", json=question_data
+    )
 
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -51,7 +53,7 @@ async def test_create_question(
 
 async def test_create_question_no_quiz(client: AsyncClient, db_session: AsyncSession):
     question_data = {"content": "What is the question?"}
-    response = await client.post("/api/quiz/123/questions", json=question_data)
+    response = await client.post("/api/quizzes/123/questions", json=question_data)
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -65,34 +67,44 @@ async def test_create_question_invalid_type(
         "content": "What is the question?",
         "type": "invalid",
     }
-    response = await client.post(f"/api/quiz/{quiz.id}/questions", json=question_data)
+    response = await client.post(
+        f"/api/quizzes/{quiz.id}/questions", json=question_data
+    )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-async def test_questions(client: AsyncClient, db_session: AsyncSession):
-    quiz = await QuizFactory.create()
-    questions = await QuestionFactory.create_batch(5, quiz=quiz)
+@pytest.mark.parametrize("cases", ["found", "not_found"])
+async def test_get_questions(client: AsyncClient, db_session: AsyncSession, cases: str):
+    if cases == "found":
+        quiz = await QuizFactory.create()
+        questions = await QuestionFactory.create_batch(5, quiz=quiz)
+        quiz_id = quiz.id
+    else:
+        quiz_id = 123
 
-    response = await client.get(f"/api/quiz/{quiz.id}/questions")
+    response = await client.get(f"/api/quizzes/{quiz_id}/questions")
 
-    assert response.status_code == status.HTTP_200_OK
+    if cases == "not_found":
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+    else:
+        assert response.status_code == status.HTTP_200_OK
 
-    returned_questions = response.json()
-    assert len(returned_questions) == len(questions)
+        returned_questions = response.json()
+        assert len(returned_questions) == len(questions)
 
-    # sort questions by id so they can be iterated simultaneously
-    questions = sorted(questions, key=lambda d: d.id)
-    returned_questions = sorted(returned_questions, key=lambda d: d["id"])
+        # sort questions by id so they can be iterated simultaneously
+        questions = sorted(questions, key=lambda d: d.id)
+        returned_questions = sorted(returned_questions, key=lambda d: d["id"])
 
-    for created, returned in zip(questions, returned_questions):
-        for key in returned:
-            if key in ["created_at", "updated_at"]:
-                assert returned[key] == IsDatetime(
-                    approx=getattr(created, key), delta=0, iso_string=True
-                )
-            else:
-                assert returned[key] == getattr(created, key)
+        for created, returned in zip(questions, returned_questions):
+            for key in returned:
+                if key in ["created_at", "updated_at"]:
+                    assert returned[key] == IsDatetime(
+                        approx=getattr(created, key), delta=0, iso_string=True
+                    )
+                else:
+                    assert returned[key] == getattr(created, key)
 
 
 @pytest.mark.parametrize("cases", ["found", "not_found"])

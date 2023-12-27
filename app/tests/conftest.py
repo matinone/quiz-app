@@ -10,10 +10,11 @@ from sqlalchemy.sql import text
 
 from app.main import app
 from app.models.database import AsyncSessionLocal, Base, async_engine, get_session
+from app.tests.factories.answer_options_factory import AnswerOptionFactory
 from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
 
-factory_list = [QuizFactory, QuestionFactory]
+factory_list = [AnswerOptionFactory, QuizFactory, QuestionFactory]
 
 
 @pytest.fixture(scope="session")

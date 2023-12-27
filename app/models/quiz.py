@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Self
 
 from sqlalchemy import DateTime, String, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.models.database import Base
@@ -47,3 +47,10 @@ class Quiz(Base):
             select(cls).order_by(desc(cls.created_at)).offset(offset).limit(limit)
         )
         return list(result.scalars().all())
+
+    @classmethod
+    async def get_with_questions(cls, db: AsyncSession, id: int) -> Self | None:
+        result = await db.execute(
+            select(cls).where(cls.id == id).options(joinedload(cls.questions))
+        )
+        return result.scalar()

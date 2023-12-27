@@ -3,13 +3,14 @@ from typing import TYPE_CHECKING, Self
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.models.database import Base
 from app.schemas import QuestionCreate
 
 if TYPE_CHECKING:
+    from app.models.answer_options import AnswerOption
     from app.models.quiz import Quiz
 
 
@@ -25,8 +26,12 @@ class Question(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
-    # have to use "Quiz" to avoid circular dependencies
+    # types as strings (i.e. "Quiz") to avoid circular dependencies
     quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="questions")
+
+    answer_options: Mapped[list["AnswerOption"]] = relationship(
+        "AnswerOption", back_populates="question", cascade="delete, delete-orphan"
+    )
 
     @classmethod
     async def create(cls, db: AsyncSession, question: QuestionCreate) -> Self:
@@ -47,3 +52,11 @@ class Question(Base):
     async def get_by_quiz_id(cls, db: AsyncSession, quiz_id: int) -> list[Self]:
         result = await db.execute(select(cls).where(cls.quiz_id == quiz_id))
         return list(result.scalars().all())
+
+    @classmethod
+    async def get_with_answers(cls, db: AsyncSession, id: int) -> Self | None:
+        result = await db.execute(
+            select(cls).where(cls.id == id).options(joinedload(cls.answer_options))
+        )
+
+        return result.scalar()
