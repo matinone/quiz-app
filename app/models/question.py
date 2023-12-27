@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Self
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, joinedload, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.models.database import Base
@@ -52,3 +52,11 @@ class Question(Base):
     async def get_by_quiz_id(cls, db: AsyncSession, quiz_id: int) -> list[Self]:
         result = await db.execute(select(cls).where(cls.quiz_id == quiz_id))
         return list(result.scalars().all())
+
+    @classmethod
+    async def get_with_answers(cls, db: AsyncSession, id: int) -> Self | None:
+        result = await db.execute(
+            select(cls).where(cls.id == id).options(joinedload(cls.answer_options))
+        )
+
+        return result.scalar()

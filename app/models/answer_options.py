@@ -26,9 +26,9 @@ class AnswerOption(Base):
     @classmethod
     async def create(cls, db: AsyncSession, option: AnswerOptionCreate) -> Self:
         new_option = cls(
-            quiz_id=option.question_id,
+            question_id=option.question_id,
             content=option.content,
-            type=option.is_correct,
+            is_correct=option.is_correct,
         )
 
         db.add(new_option)
