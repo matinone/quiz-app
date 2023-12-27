@@ -13,8 +13,9 @@ from app.models.database import AsyncSessionLocal, Base, async_engine, get_sessi
 from app.tests.factories.answer_options_factory import AnswerOptionFactory
 from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
+from app.tests.factories.user_factory import UserFactory
 
-factory_list = [AnswerOptionFactory, QuizFactory, QuestionFactory]
+factory_list = [AnswerOptionFactory, QuizFactory, QuestionFactory, UserFactory]
 
 
 @pytest.fixture(scope="session")
