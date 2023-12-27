@@ -24,7 +24,9 @@ async def test_create_question(
         question_data["type"] = QuestionType.multiple_choice
         question_data["points"] = 4
 
-    response = await client.post(f"/api/quiz/{quiz.id}/questions", json=question_data)
+    response = await client.post(
+        f"/api/quizzes/{quiz.id}/questions", json=question_data
+    )
 
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -51,7 +53,7 @@ async def test_create_question(
 
 async def test_create_question_no_quiz(client: AsyncClient, db_session: AsyncSession):
     question_data = {"content": "What is the question?"}
-    response = await client.post("/api/quiz/123/questions", json=question_data)
+    response = await client.post("/api/quizzes/123/questions", json=question_data)
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -65,7 +67,9 @@ async def test_create_question_invalid_type(
         "content": "What is the question?",
         "type": "invalid",
     }
-    response = await client.post(f"/api/quiz/{quiz.id}/questions", json=question_data)
+    response = await client.post(
+        f"/api/quizzes/{quiz.id}/questions", json=question_data
+    )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -79,7 +83,7 @@ async def test_get_questions(client: AsyncClient, db_session: AsyncSession, case
     else:
         quiz_id = 123
 
-    response = await client.get(f"/api/quiz/{quiz_id}/questions")
+    response = await client.get(f"/api/quizzes/{quiz_id}/questions")
 
     if cases == "not_found":
         assert response.status_code == status.HTTP_404_NOT_FOUND

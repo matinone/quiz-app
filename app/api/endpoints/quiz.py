@@ -7,7 +7,7 @@ import app.models as models
 import app.schemas as schemas
 from app.models.database import AsyncSessionDep
 
-router = APIRouter(prefix="/quiz", tags=["quiz"])
+router = APIRouter(prefix="/quizzes", tags=["quiz"])
 
 
 async def get_quiz_from_id(quiz_id: int, db: AsyncSessionDep) -> models.Quiz:
