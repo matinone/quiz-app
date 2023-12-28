@@ -51,6 +51,9 @@ pydantic-settings = "^2.0.3"
 asyncpg = "^0.29.0"
 loguru = "^0.7.2"
 alembic = "^1.12.1"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.6"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.3"
