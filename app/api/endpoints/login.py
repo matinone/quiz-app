@@ -44,3 +44,26 @@ async def get_access_token_from_username(
         "token_type": "bearer",
     }
     return response
+
+
+@router.post(
+    "/register",
+    response_model=schemas.UserReturn,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new user",
+)
+async def register_user(db: AsyncSessionDep, user: schemas.UserCreate):
+    new_user = await models.User.get_by_username(db=db, username=user.username)
+    if new_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists"
+        )
+
+    new_user = await models.User.get_by_email(db=db, email=user.email)
+    if new_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
+
+    new_user = await models.User.create(db=db, user=user)
+    return new_user

@@ -48,3 +48,8 @@ class User(Base):
     async def get_by_username(cls, db: AsyncSession, username: str) -> Self | None:
         result = await db.execute(select(cls).where(cls.username == username))
         return result.scalar()
+
+    @classmethod
+    async def get_by_email(cls, db: AsyncSession, email: str) -> Self | None:
+        result = await db.execute(select(cls).where(cls.email == email))
+        return result.scalar()
