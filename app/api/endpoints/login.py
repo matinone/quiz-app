@@ -17,7 +17,7 @@ router = APIRouter(prefix="", tags=["login"])
     status_code=status.HTTP_201_CREATED,
     summary="Get a new access token",
 )
-def get_access_token_from_username(
+async def get_access_token_from_username(
     db: AsyncSessionDep,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Any:
@@ -25,7 +25,7 @@ def get_access_token_from_username(
     Get an OAuth2 access token from a user logging in with a username and password,
     to use in future requests as an authenticated user.
     """
-    user = models.User.get_by_username(db=db, username=form_data.username)
+    user = await models.User.get_by_username(db=db, username=form_data.username)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

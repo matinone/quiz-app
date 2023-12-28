@@ -8,8 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, SessionTransaction
 from sqlalchemy.sql import text
 
+from app.core.security import create_access_token
 from app.main import app
 from app.models.database import AsyncSessionLocal, Base, async_engine, get_session
+from app.models.user import User
 from app.tests.factories.answer_options_factory import AnswerOptionFactory
 from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
@@ -80,3 +82,16 @@ async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
 
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
+
+
+@pytest.fixture(scope="function")
+async def auth_headers(db_session) -> tuple[dict, User]:
+    """
+    Fixture to get valid authentication headers for an example user.
+    """
+    user = await UserFactory.create(username="example_user")
+    token = create_access_token(subject=user.id)
+
+    headers = {"Authorization": f"Bearer {token}"}
+    # return the user as well, in case the test needs it
+    return (headers, user)

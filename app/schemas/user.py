@@ -26,4 +26,3 @@ class UserUpdate(BaseModel):
 class UserReturn(UserBase):
     id: int
     created_at: datetime
-    last_login: datetime

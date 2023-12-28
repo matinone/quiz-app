@@ -8,7 +8,7 @@ from app.schemas import QuestionReturn
 class QuizBase(BaseModel):
     title: str
     description: str | None = None
-    created_by: str | None = None
+    created_by: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -12,7 +12,6 @@ class UserFactory(BaseFactory[User]):
     email = factory.LazyAttribute(lambda x: f"{x.username}@example.com")
     password_hash = factory.LazyAttribute(lambda x: hash(x.username))
     created_at = factory.LazyFunction(datetime.now)
-    last_login = factory.LazyFunction(datetime.now)
 
     class Meta:
         model = User

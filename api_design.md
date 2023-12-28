@@ -67,7 +67,6 @@
     * email (String, Unique): User's email address.
     * password_hash (String): Hashed password for security.
     * created_at (DateTime): Date and time of registration.
-    * last_login (DateTime): Date and time of last login.
 
 ## Quizzes Table
 * Table Name: **quizzes**

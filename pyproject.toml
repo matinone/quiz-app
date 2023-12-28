@@ -69,6 +69,8 @@ async-factory-boy = "^1.0.1"
 devtools = "^0.12.2"
 pytest-cov = "^4.1.0"
 dirty-equals = "^0.7.1.post0"
+types-python-jose = "^3.3.4.8"
+types-passlib = "^1.7.7.13"
 
 [build-system]
 requires = ["poetry-core"]

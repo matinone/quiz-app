@@ -12,14 +12,21 @@ from app.tests.factories.quiz_factory import QuizFactory
 
 
 @pytest.mark.parametrize("cases", ["full", "no_title", "no_description"])
-async def test_create_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
+async def test_create_quiz(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    auth_headers: tuple[dict, models.User],
+    cases: str,
+):
+    headers, user = auth_headers
+
     quiz_data = {"title": "My quiz", "description": "My quiz description"}
     if cases == "no_title":
         quiz_data.pop("title")
     elif cases == "no_description":
         quiz_data.pop("description")
 
-    response = await client.post("/api/quizzes", json=quiz_data)
+    response = await client.post("/api/quizzes", json=quiz_data, headers=headers)
 
     if cases == "no_title":
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -42,6 +49,9 @@ async def test_create_quiz(client: AsyncClient, db_session: AsyncSession, cases:
         assert db_quiz
         for key in quiz_data:
             assert quiz_data[key] == getattr(db_quiz, key)
+
+        assert created_quiz["created_by"] == user.id
+        assert db_quiz.created_by == user.id
 
 
 @pytest.mark.parametrize("cases", ["no_quizzes", "few_quizzes", "many_quizzes"])
@@ -71,6 +81,7 @@ async def test_get_quizzes(client: AsyncClient, db_session: AsyncSession, cases:
             "description": IsStr,
             "created_at": IsNow(iso_string=True),
             "updated_at": IsNow(iso_string=True),
+            "created_by": IsInt,
         }
 
 

@@ -1,21 +1,16 @@
 from datetime import datetime, timedelta
-from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import HTTPException, status
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import ValidationError
 
-import app.models as models
 from app.core.settings import Settings, get_settings
-from app.models.database import AsyncSessionDep
 from app.schemas import TokenPayload
 
 settings = get_settings()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/tokens")
 
 
 def decode_token(token: str, settings: Settings) -> TokenPayload:
@@ -63,18 +58,3 @@ def get_password_hash(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
-
-
-async def get_current_user(
-    db: AsyncSessionDep,
-    token: Annotated[str, Depends(oauth2_scheme)],
-    settings: Annotated[str, Depends(get_settings)],
-):
-    token_data = decode_token(token=token, settings=settings)
-    user = await models.User.get(db=db, id=token_data.sub)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    return user

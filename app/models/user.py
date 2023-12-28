@@ -27,7 +27,6 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    last_login: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     # have to use "Quiz" to avoid circular dependencies
     quizzes: Mapped[list["Quiz"]] = relationship("Quiz", back_populates="user")

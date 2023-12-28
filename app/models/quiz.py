@@ -23,7 +23,7 @@ class Quiz(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     # have to use "Question" to avoid circular dependencies
     questions: Mapped[list["Question"]] = relationship(

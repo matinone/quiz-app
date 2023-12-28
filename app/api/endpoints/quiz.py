@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 import app.models as models
 import app.schemas as schemas
+from app.api.dependencies import get_current_user
 from app.models.database import AsyncSessionDep
 
 router = APIRouter(prefix="/quizzes", tags=["quiz"])
@@ -27,7 +28,12 @@ async def get_quiz_from_id(quiz_id: int, db: AsyncSessionDep) -> models.Quiz:
     summary="Create a new quiz",
     response_description="The new created quiz",
 )
-async def create_quiz(db: AsyncSessionDep, quiz: schemas.QuizCreate) -> Any:
+async def create_quiz(
+    db: AsyncSessionDep,
+    quiz: schemas.QuizCreate,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+) -> Any:
+    quiz.created_by = current_user.id
     new_quiz = await models.Quiz.create(db=db, quiz=quiz)
     return new_quiz
 
