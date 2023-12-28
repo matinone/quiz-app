@@ -1,3 +1,4 @@
+import secrets
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,6 +18,10 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "postgres"
     POSTGRES_SERVER: str = "postgres"
     POSTGRES_PORT: int = 5432
+
+    SECRET_KEY: str = secrets.token_urlsafe(32)
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MIN: int = 30
 
     model_config = SettingsConfigDict(env_file=".env")
 

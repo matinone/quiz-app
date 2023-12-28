@@ -8,6 +8,7 @@ from app.schemas import QuestionReturn
 class QuizBase(BaseModel):
     title: str
     description: str | None = None
+    created_by: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -28,7 +29,6 @@ class QuizReturn(QuizBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    # TODO: add created_by field once users table is available
 
 
 class QuizWithQuestions(QuizReturn):

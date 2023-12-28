@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 import app.models as models
 import app.schemas as schemas
+from app.api.dependencies import get_current_user
 from app.models.database import AsyncSessionDep
 
 router = APIRouter(prefix="/quizzes", tags=["quiz"])
@@ -20,6 +21,26 @@ async def get_quiz_from_id(quiz_id: int, db: AsyncSessionDep) -> models.Quiz:
     return quiz
 
 
+async def get_quiz_check_user(
+    quiz_id: int,
+    user: Annotated[models.User, Depends(get_current_user)],
+    db: AsyncSessionDep,
+) -> models.Quiz:
+    quiz = await models.Quiz.get(db=db, id=quiz_id)
+    if not quiz:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found"
+        )
+
+    if quiz.created_by != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Quiz does not belong to current user",
+        )
+
+    return quiz
+
+
 @router.post(
     "",
     response_model=schemas.QuizReturn,
@@ -27,7 +48,12 @@ async def get_quiz_from_id(quiz_id: int, db: AsyncSessionDep) -> models.Quiz:
     summary="Create a new quiz",
     response_description="The new created quiz",
 )
-async def create_quiz(db: AsyncSessionDep, quiz: schemas.QuizCreate) -> Any:
+async def create_quiz(
+    db: AsyncSessionDep,
+    quiz: schemas.QuizCreate,
+    current_user: Annotated[models.User, Depends(get_current_user)],
+) -> Any:
+    quiz.created_by = current_user.id
     new_quiz = await models.Quiz.create(db=db, quiz=quiz)
     return new_quiz
 
@@ -68,7 +94,7 @@ async def get_quiz(quiz: Annotated[models.Quiz, Depends(get_quiz_from_id)]) -> A
 )
 async def update_quiz(
     update_data: schemas.QuizUpdate,
-    quiz: Annotated[models.Quiz, Depends(get_quiz_from_id)],
+    quiz: Annotated[models.Quiz, Depends(get_quiz_check_user)],
     db: AsyncSessionDep,
 ) -> Any:
     updated_quiz = await models.Quiz.update(db=db, current=quiz, new=update_data)
@@ -82,7 +108,7 @@ async def update_quiz(
     summary="Delete quiz by id",
 )
 async def delete_quiz(
-    quiz: Annotated[models.Quiz, Depends(get_quiz_from_id)],
+    quiz: Annotated[models.Quiz, Depends(get_quiz_check_user)],
     db: AsyncSessionDep,
 ) -> None:
     await models.Quiz.delete(db=db, db_obj=quiz)
@@ -97,9 +123,11 @@ async def delete_quiz(
     response_description="The created question",
 )
 async def create_question_for_quiz(
-    quiz_id: int, question: schemas.QuestionCreate, db: AsyncSessionDep
+    quiz: Annotated[models.Quiz, Depends(get_quiz_check_user)],
+    question: schemas.QuestionCreate,
+    db: AsyncSessionDep,
 ) -> Any:
-    question.quiz_id = quiz_id
+    question.quiz_id = quiz.id
     try:
         new_question = await models.Question.create(db=db, question=question)
     except IntegrityError as exc:
