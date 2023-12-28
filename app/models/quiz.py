@@ -58,3 +58,8 @@ class Quiz(Base):
             select(cls).where(cls.id == id).options(joinedload(cls.questions))
         )
         return result.scalar()
+
+    @classmethod
+    async def get_quiz_created_by(cls, db: AsyncSession, id: int) -> int | None:
+        result = await db.execute(select(cls.created_by).where(cls.id == id))
+        return result.scalar()

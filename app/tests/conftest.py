@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 from typing import AsyncGenerator
 
 import pytest
@@ -18,6 +19,12 @@ from app.tests.factories.quiz_factory import QuizFactory
 from app.tests.factories.user_factory import UserFactory
 
 factory_list = [AnswerOptionFactory, QuizFactory, QuestionFactory, UserFactory]
+
+
+@dataclass(frozen=True)
+class AuthInfo:
+    headers: dict
+    user: User
 
 
 @pytest.fixture(scope="session")
@@ -85,7 +92,7 @@ async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest.fixture(scope="function")
-async def auth_headers(db_session) -> tuple[dict, User]:
+async def auth_info(db_session) -> AuthInfo:
     """
     Fixture to get valid authentication headers for an example user.
     """
@@ -94,4 +101,4 @@ async def auth_headers(db_session) -> tuple[dict, User]:
 
     headers = {"Authorization": f"Bearer {token}"}
     # return the user as well, in case the test needs it
-    return (headers, user)
+    return AuthInfo(headers=headers, user=user)

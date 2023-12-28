@@ -8,16 +8,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.models as models
 from app.schemas import QuestionType
+from app.tests.conftest import AuthInfo
 from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
 
 
 @pytest.mark.parametrize("cases", ["default", "custom"])
 async def test_create_question(
-    client: AsyncClient, db_session: AsyncSession, cases: str
+    client: AsyncClient,
+    db_session: AsyncSession,
+    cases: str,
+    auth_info: AuthInfo,
 ):
     # questions must be associated to an existing quiz
-    quiz = await QuizFactory.create()
+    quiz = await QuizFactory.create(user=auth_info.user)
     question_data = {"quiz_id": quiz.id, "content": "What is the question?"}
 
     if cases == "custom":
@@ -25,7 +29,9 @@ async def test_create_question(
         question_data["points"] = 4
 
     response = await client.post(
-        f"/api/quizzes/{quiz.id}/questions", json=question_data
+        f"/api/quizzes/{quiz.id}/questions",
+        json=question_data,
+        headers=auth_info.headers,
     )
 
     assert response.status_code == status.HTTP_201_CREATED
@@ -51,24 +57,34 @@ async def test_create_question(
         assert question_data[key] == getattr(db_question, key)
 
 
-async def test_create_question_no_quiz(client: AsyncClient, db_session: AsyncSession):
+async def test_create_question_no_quiz(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    auth_info: AuthInfo,
+):
     question_data = {"content": "What is the question?"}
-    response = await client.post("/api/quizzes/123/questions", json=question_data)
+    response = await client.post(
+        "/api/quizzes/123/questions", json=question_data, headers=auth_info.headers
+    )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 async def test_create_question_invalid_type(
-    client: AsyncClient, db_session: AsyncSession
+    client: AsyncClient,
+    db_session: AsyncSession,
+    auth_info: AuthInfo,
 ):
-    quiz = await QuizFactory.create()
+    quiz = await QuizFactory.create(user=auth_info.user)
     question_data = {
         "quiz_id": quiz.id,
         "content": "What is the question?",
         "type": "invalid",
     }
     response = await client.post(
-        f"/api/quizzes/{quiz.id}/questions", json=question_data
+        f"/api/quizzes/{quiz.id}/questions",
+        json=question_data,
+        headers=auth_info.headers,
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -129,12 +145,17 @@ async def test_get_question(client: AsyncClient, db_session: AsyncSession, cases
 
 @pytest.mark.parametrize("cases", ["found", "not_found", "partial_update", "invalid"])
 async def test_update_question(
-    client: AsyncClient, db_session: AsyncSession, cases: str
+    client: AsyncClient,
+    db_session: AsyncSession,
+    cases: str,
+    auth_info: AuthInfo,
 ):
     question_id = 4
     if cases != "not_found":
         await QuestionFactory.create(
-            id=question_id, updated_at=datetime.utcnow() - timedelta(hours=5)
+            id=question_id,
+            quiz__user=auth_info.user,
+            updated_at=datetime.utcnow() - timedelta(hours=5),
         )
 
     question_data: dict[str, str | int] = {"content": "Is this a new question?"}
@@ -146,7 +167,9 @@ async def test_update_question(
         question_data["type"] = "invalid_type"
 
     before_update = datetime.utcnow() - timedelta(seconds=5)
-    response = await client.put(f"/api/questions/{question_id}", json=question_data)
+    response = await client.put(
+        f"/api/questions/{question_id}", json=question_data, headers=auth_info.headers
+    )
 
     if cases == "not_found":
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -176,13 +199,18 @@ async def test_update_question(
 
 @pytest.mark.parametrize("cases", ["found", "not_found"])
 async def test_delete_question(
-    client: AsyncClient, db_session: AsyncSession, cases: str
+    client: AsyncClient,
+    db_session: AsyncSession,
+    cases: str,
+    auth_info: AuthInfo,
 ):
     question_id = 4
     if cases == "found":
-        await QuestionFactory.create(id=question_id)
+        await QuestionFactory.create(id=question_id, quiz__user=auth_info.user)
 
-    response = await client.delete(f"/api/questions/{question_id}")
+    response = await client.delete(
+        f"/api/questions/{question_id}", headers=auth_info.headers
+    )
 
     if cases == "not_found":
         assert response.status_code == status.HTTP_404_NOT_FOUND

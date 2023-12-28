@@ -7,6 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.models as models
+from app.tests.conftest import AuthInfo
 from app.tests.factories.question_factory import QuestionFactory
 from app.tests.factories.quiz_factory import QuizFactory
 
@@ -15,18 +16,18 @@ from app.tests.factories.quiz_factory import QuizFactory
 async def test_create_quiz(
     client: AsyncClient,
     db_session: AsyncSession,
-    auth_headers: tuple[dict, models.User],
+    auth_info: AuthInfo,
     cases: str,
 ):
-    headers, user = auth_headers
-
     quiz_data = {"title": "My quiz", "description": "My quiz description"}
     if cases == "no_title":
         quiz_data.pop("title")
     elif cases == "no_description":
         quiz_data.pop("description")
 
-    response = await client.post("/api/quizzes", json=quiz_data, headers=headers)
+    response = await client.post(
+        "/api/quizzes", json=quiz_data, headers=auth_info.headers
+    )
 
     if cases == "no_title":
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -50,8 +51,8 @@ async def test_create_quiz(
         for key in quiz_data:
             assert quiz_data[key] == getattr(db_quiz, key)
 
-        assert created_quiz["created_by"] == user.id
-        assert db_quiz.created_by == user.id
+        assert created_quiz["created_by"] == auth_info.user.id
+        assert db_quiz.created_by == auth_info.user.id
 
 
 @pytest.mark.parametrize("cases", ["no_quizzes", "few_quizzes", "many_quizzes"])
@@ -118,11 +119,18 @@ async def test_get_quiz(client: AsyncClient, db_session: AsyncSession, cases: st
 
 
 @pytest.mark.parametrize("cases", ["found", "not_found", "partial_update"])
-async def test_update_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
+async def test_update_quiz(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    auth_info: AuthInfo,
+    cases: str,
+):
     quiz_id = 4
     if cases != "not_found":
         await QuizFactory.create(
-            id=quiz_id, updated_at=datetime.utcnow() - timedelta(hours=5)
+            id=quiz_id,
+            user=auth_info.user,
+            updated_at=datetime.utcnow() - timedelta(hours=5),
         )
 
     quiz_data = {"title": "New title"}
@@ -130,7 +138,9 @@ async def test_update_quiz(client: AsyncClient, db_session: AsyncSession, cases:
         quiz_data["description"] = "New description"
 
     before_update = datetime.utcnow() - timedelta(seconds=5)
-    response = await client.put(f"/api/quizzes/{quiz_id}", json=quiz_data)
+    response = await client.put(
+        f"/api/quizzes/{quiz_id}", json=quiz_data, headers=auth_info.headers
+    )
 
     if cases == "not_found":
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -156,12 +166,17 @@ async def test_update_quiz(client: AsyncClient, db_session: AsyncSession, cases:
 
 
 @pytest.mark.parametrize("cases", ["found", "not_found"])
-async def test_delete_quiz(client: AsyncClient, db_session: AsyncSession, cases: str):
+async def test_delete_quiz(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    auth_info: AuthInfo,
+    cases: str,
+):
     quiz_id = 4
     if cases == "found":
-        await QuizFactory.create(id=quiz_id)
+        await QuizFactory.create(id=quiz_id, user=auth_info.user)
 
-    response = await client.delete(f"/api/quizzes/{quiz_id}")
+    response = await client.delete(f"/api/quizzes/{quiz_id}", headers=auth_info.headers)
 
     if cases == "not_found":
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -174,13 +189,15 @@ async def test_delete_quiz(client: AsyncClient, db_session: AsyncSession, cases:
 
 
 async def test_delete_quiz_delete_questions(
-    client: AsyncClient, db_session: AsyncSession
+    client: AsyncClient,
+    db_session: AsyncSession,
+    auth_info: AuthInfo,
 ):
     quiz_id = 4
-    quiz = await QuizFactory.create(id=quiz_id)
+    quiz = await QuizFactory.create(id=quiz_id, user=auth_info.user)
     await QuestionFactory.create_batch(5, quiz=quiz)
 
-    response = await client.delete(f"/api/quizzes/{quiz_id}")
+    response = await client.delete(f"/api/quizzes/{quiz_id}", headers=auth_info.headers)
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
@@ -190,3 +207,34 @@ async def test_delete_quiz_delete_questions(
 
     db_questions = await models.Question.get_by_quiz_id(db=db_session, quiz_id=quiz_id)
     assert len(db_questions) == 0
+
+
+@pytest.mark.parametrize("cases", ["unauthenticated", "unauthorized"])
+@pytest.mark.parametrize("method", ["update", "delete"])
+async def test_modify_quiz_unauthorized(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    auth_info: AuthInfo,
+    cases: str,
+    method: str,
+):
+    # create a quiz that belongs to a different user
+    quiz = await QuizFactory.create()
+
+    if method == "update" and cases == "unauthorized":
+        response = await client.put(
+            f"/api/quizzes/{quiz.id}", headers=auth_info.headers
+        )
+    elif method == "update" and cases == "unauthenticated":
+        response = await client.put(f"/api/quizzes/{quiz.id}")
+    elif method == "delete" and cases == "unauthorized":
+        response = await client.delete(
+            f"/api/quizzes/{quiz.id}", headers=auth_info.headers
+        )
+    else:
+        response = await client.delete(f"/api/quizzes/{quiz.id}")
+
+    if cases == "unauthorized":
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+    else:
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED

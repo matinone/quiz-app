@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 import app.models as models
 import app.schemas as schemas
+from app.api.dependencies import get_current_user
 from app.models.database import AsyncSessionDep
 
 router = APIRouter(prefix="/questions", tags=["question"])
@@ -17,6 +18,21 @@ async def get_question_from_id(
     if not question:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Question not found"
+        )
+
+    return question
+
+
+async def get_question_check_user(
+    question: Annotated[models.Question, Depends(get_question_from_id)],
+    user: Annotated[models.User, Depends(get_current_user)],
+    db: AsyncSessionDep,
+) -> models.Question:
+    quiz_author_id = await models.Quiz.get_quiz_created_by(db=db, id=question.quiz_id)
+    if quiz_author_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Quiz does not belong to current user",
         )
 
     return question
@@ -44,7 +60,7 @@ async def get_question(
 )
 async def update_question(
     update_data: schemas.QuestionUpdate,
-    question: Annotated[models.Question, Depends(get_question_from_id)],
+    question: Annotated[models.Question, Depends(get_question_check_user)],
     db: AsyncSessionDep,
 ) -> Any:
     updated_question = await models.Question.update(
@@ -60,13 +76,14 @@ async def update_question(
     summary="Delete quiz by id",
 )
 async def delete_question(
-    question: Annotated[models.Question, Depends(get_question_from_id)],
+    question: Annotated[models.Question, Depends(get_question_check_user)],
     db: AsyncSessionDep,
 ) -> None:
     await models.Question.delete(db=db, db_obj=question)
     # body will be empty when using status code 204
 
 
+# TODO: only the quiz author should be able to add answer options to a question
 @router.post(
     "/{question_id}/options",
     response_model=schemas.AnswerOptionReturn,
